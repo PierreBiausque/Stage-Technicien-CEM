@@ -1,108 +1,118 @@
-function CartographieII()
-    % ================================================================
+function Cartographie()
+    % =====================================================================
     % 1. CREATION DE LA FENETRE PRINCIPALE UNIQUE
-    % ================================================================
-    fig = uifigure('Name', 'ESIGELEC - Analyseur et Pipeline de Champ Proche', ...
-                   'Position', [100, 100, 1050, 650], ...
+    % =====================================================================
+    fig = uifigure('Name', 'ESIGELEC - Analyseur de Champ Proche', ...
+                   'Position', [100, 100, 1100, 680], ...
                    'Color', [0.95, 0.96, 0.98]);
     
-    % Stockage des données internes à l'application
     appData = struct('dossierSource', '', 'fichiersValides', []);
-    
-    % Couleurs de la charte graphique
     couleurBleu = [41, 128, 185] / 255;
     couleurGris = [44, 62, 80] / 255;
 
-    % ================================================================
+    % =====================================================================
     % 2. PANNEAU LATERAL DE CONTROLE (GAUCHE)
-    % ================================================================
+    % =====================================================================
     pnlControle = uipanel(fig, 'Title', ' CONFIGURATION & FILTRES', ...
-                              'Position', [20, 20, 260, 610], ...
+                              'Position', [20, 20, 280, 640], ...
                               'BackgroundColor', 'w', ...
                               'ForegroundColor', couleurGris, ...
                               'FontWeight', 'bold', 'FontSize', 12);
 
-    % Sélection du dossier
+    % --- Sélection du dossier ---
     uibutton(pnlControle, 'Text', 'Sélectionner le dossier CSV', ...
-                          'Position', [15, 530, 225, 35], ...
+                          'Position', [15, 580, 250, 35], ...
                           'BackgroundColor', couleurBleu, ...
                           'FontColor', 'w', 'FontWeight', 'bold', ...
                           'ButtonPushedFcn', @btnDossierCallback);
                       
     lblDossier = uilabel(pnlControle, 'Text', 'Aucun dossier chargé.', ...
-                                      'Position', [15, 500, 225, 20], ...
+                                      'Position', [15, 555, 250, 20], ...
                                       'FontAngle', 'italic', 'FontColor', [0.5 0.5 0.5]);
 
-    % Menu de sélection du champ
-    uilabel(pnlControle, 'Text', 'Composante du champ :', 'Position', [15, 440, 225, 22], 'FontWeight', 'bold');
-    dropChamp = uidropdown(pnlControle, 'Position', [15, 415, 225, 25], 'Items', {'En attente...'});
+    % --- Menus de sélection déroulants ---
+    uilabel(pnlControle, 'Text', 'Composante du champ :', 'Position', [15, 515, 250, 22], 'FontWeight', 'bold');
+    dropChamp = uidropdown(pnlControle, 'Position', [15, 490, 250, 25], 'Items', {'En attente...'});
 
-    % Menu de sélection de la fréquence
-    uilabel(pnlControle, 'Text', 'Fréquence de mesure :', 'Position', [15, 355, 225, 22], 'FontWeight', 'bold');
-    dropFreq = uidropdown(pnlControle, 'Position', [15, 330, 225, 25], 'Items', {'En attente...'});
+    uilabel(pnlControle, 'Text', 'Fréquence de mesure :', 'Position', [15, 440, 250, 22], 'FontWeight', 'bold');
+    dropFreq = uidropdown(pnlControle, 'Position', [15, 415, 250, 25], 'Items', {'En attente...'});
 
-    % Menu de sélection de la hauteur
-    uilabel(pnlControle, 'Text', 'Altitude Z (Hauteur) :', 'Position', [15, 270, 225, 22], 'FontWeight', 'bold');
-    dropH = uidropdown(pnlControle, 'Position', [15, 245, 225, 25], 'Items', {'En attente...'});
+    uilabel(pnlControle, 'Text', 'Altitude Z (Hauteur) :', 'Position', [15, 365, 250, 22], 'FontWeight', 'bold');
+    dropH = uidropdown(pnlControle, 'Position', [15, 340, 250, 25], 'Items', {'En attente...'});
 
-    % Bouton d'affichage dynamique
+    % --- Limites E et H séparées ---
+    btnDetect = uibutton(pnlControle, 'Text', 'Détecter Bornes Réelles (CSV)', ...
+                          'Position', [15, 295, 250, 30], ...
+                          'BackgroundColor', [52, 152, 219] / 255, ...
+                          'FontColor', 'w', 'FontWeight', 'bold', ...
+                          'Enable', 'off', ...
+                          'ButtonPushedFcn', @btnDetecterLimitesCallback);
+                      
+    % Échelles E
+    uilabel(pnlControle, 'Text', 'Échelle Champ Électrique (E) :', 'Position', [15, 265, 250, 20], 'FontWeight', 'bold', 'FontSize', 10);
+    uilabel(pnlControle, 'Text', 'Min :', 'Position', [15, 240, 35, 20]);
+    numMinE = uieditfield(pnlControle, 'numeric', 'Position', [50, 240, 65, 22], 'Value', -60);
+    uilabel(pnlControle, 'Text', 'Max :', 'Position', [135, 240, 35, 20]);
+    numMaxE = uieditfield(pnlControle, 'numeric', 'Position', [170, 240, 65, 22], 'Value', 75);
+
+    % Échelles H
+    uilabel(pnlControle, 'Text', 'Échelle Champ Magnétique (H) :', 'Position', [15, 210, 250, 20], 'FontWeight', 'bold', 'FontSize', 10);
+    uilabel(pnlControle, 'Text', 'Min :', 'Position', [15, 185, 35, 20]);
+    numMinH = uieditfield(pnlControle, 'numeric', 'Position', [50, 185, 65, 22], 'Value', -112);
+    uilabel(pnlControle, 'Text', 'Max :', 'Position', [135, 185, 35, 20]);
+    numMaxH = uieditfield(pnlControle, 'numeric', 'Position', [170, 185, 65, 22], 'Value', 28);
+
+    % --- Boutons d'actions graphiques et exports ---
     btnTracer = uibutton(pnlControle, 'Text', 'Afficher la Cartographie', ...
-                                      'Position', [15, 175, 225, 40], ...
+                                      'Position', [15, 135, 250, 35], ...
                                       'BackgroundColor', [46, 204, 113] / 255, ...
                                       'FontColor', 'w', 'FontWeight', 'bold', 'FontSize', 12, ...
                                       'Enable', 'off', ...
                                       'ButtonPushedFcn', @btnTracerCallback);
 
-    % Bouton d'export de la carte active uniquement
     btnExportSeul = uibutton(pnlControle, 'Text', 'Exporter cette carte en PNG', ...
-                                         'Position', [15, 125, 225, 35], ...
-                                         'BackgroundColor', [52, 152, 219] / 255, ...
+                                         'Position', [15, 95, 250, 30], ...
+                                         'BackgroundColor', [155, 89, 182] / 255, ...
                                          'FontColor', 'w', 'FontWeight', 'bold', ...
                                          'Enable', 'off', ...
                                          'ButtonPushedFcn', @btnExportSeulCallback);
 
-    % Bouton d'export de masse
-    btnExport = uibutton(pnlControle, 'Text', 'Tout exporter (90 PNG)', ...
-                                      'Position', [15, 75, 225, 30], ...
+    btnExport = uibutton(pnlControle, 'Text', 'Tout exporter (PNG de masse)', ...
+                                      'Position', [15, 60, 250, 30], ...
                                       'BackgroundColor', [230, 126, 34] / 255, ...
                                       'FontColor', 'w', 'FontWeight', 'bold', ...
                                       'Enable', 'off', ...
                                       'ButtonPushedFcn', @btnExportCallback);
+
+    % --- Bouton Générateur de script HFSS ---
+    uibutton(pnlControle, 'Text', '⚙️ Générateur Script HFSS (.py)', ...
+                          'Position', [15, 25, 250, 28], ...
+                          'BackgroundColor', [52, 73, 94] / 255, ...
+                          'FontColor', 'w', 'FontWeight', 'bold', ...
+                          'ButtonPushedFcn', @(~,~) ouvrirGenerateurScript());
                                   
-    % Indicateur d'état
-    lblStatus = uilabel(pnlControle, 'Text', 'Statut : Prêt', ...
-                                     'Position', [15, 20, 225, 20], ...
-                                     'FontColor', couleurGris);
+    lblStatus = uilabel(pnlControle, 'Text', 'Statut : Prêt', 'Position', [15, 5, 250, 15], 'FontColor', couleurGris, 'FontSize', 10);
 
-    % ================================================================
+    % =====================================================================
     % 3. ZONE DE TRACÉ INTEGRÉE (DROITE)
-    % ================================================================
-    ax = uiaxes(fig, 'Position', [300, 40, 720, 580], ...
-                     'BackgroundColor', 'w');
+    % =====================================================================
+    ax = uiaxes(fig, 'Position', [330, 40, 740, 600], 'BackgroundColor', 'w');
     title(ax, 'Veuillez charger un dossier contenant les exports CSV de HFSS', 'Color', [0.5 0.5 0.5]);
-    grid(ax, 'on');
-    ax.GridLineStyle = ':';
+    grid(ax, 'on'); ax.GridLineStyle = ':';
 
-    % ================================================================
-    % 4. FONCTIONS DE CALLBACKS (LOGIQUE INTERNE NESTED)
-    % ================================================================
+    % =====================================================================
+    % 4. LOGIQUE INTERNE (CALLBACKS)
+    % =====================================================================
     
-    % Action : Clic sur Sélectionner dossier
     function btnDossierCallback(~, ~)
         dossier = uigetdir(pwd, 'Sélectionnez le dossier Export_CSV');
         if dossier == 0, return; end
-        
         appData.dossierSource = dossier;
         [~, nomDossierCourt] = fileparts(dossier);
         lblDossier.Text = ['Dossier : .../' nomDossierCourt];
         
         fichiers = dir(fullfile(dossier, '*.csv'));
         fichiers = fichiers(~strcmp({fichiers.name}, 'Resultats_MinMax.csv'));
-        
-        if isempty(fichiers)
-            uialert(fig, 'Aucun fichier de cartographie valide trouvé dans ce dossier.', 'Erreur dossier');
-            return;
-        end
         
         champs = {}; freqs = {}; hauteurs = {};
         fichiersValides = struct('name', {}, 'champ', {}, 'freq', {}, 'hauteur', {});
@@ -112,174 +122,307 @@ function CartographieII()
             if length(tokens) >= 3
                 c = tokens{1}; f = tokens{2}; h = tokens{3};
                 champs = [champs; c]; freqs = [freqs; f]; hauteurs = [hauteurs; h];
-                
                 fichiersValides(end+1).name = fichiers(idx).name;
-                fichiersValides(end).champ = c;
-                fichiersValides(end).freq = f;
-                fichiersValides(end).hauteur = h;
+                fichiersValides(end).champ = c; fichiersValides(end).freq = f; fichiersValides(end).hauteur = h;
+            end
+        end
+        appData.fichiersValides = fichiersValides;
+        dropChamp.Items = unique(champs); dropFreq.Items = unique(freqs); dropH.Items = unique(hauteurs);
+        
+        btnTracer.Enable = 'on'; btnExportSeul.Enable = 'on'; btnExport.Enable = 'on';
+        btnDetect.Enable = 'on'; 
+        lblStatus.Text = sprintf('Statut : %d fichiers détectés', length(fichiersValides));
+    end
+
+    function btnDetecterLimitesCallback(~, ~)
+        lblStatus.Text = 'Statut : Analyse globale des fichiers...';
+        drawnow;
+        
+        globalMinE = inf; globalMaxE = -inf;
+        globalMinH = inf; globalMaxH = -inf;
+        
+        for idx = 1:length(appData.fichiersValides)
+            f = appData.fichiersValides(idx);
+            chemin = fullfile(appData.dossierSource, f.name);
+            
+            opts = detectImportOptions(chemin); opts.VariableNamingRule = 'preserve';
+            data = readtable(chemin, opts);
+            Z = data{:, 3};
+            
+            if contains(f.name, 'NearE')
+                globalMinE = min(globalMinE, min(Z));
+                globalMaxE = max(globalMaxE, max(Z));
+            else
+                globalMinH = min(globalMinH, min(Z));
+                globalMaxH = max(globalMaxH, max(Z));
             end
         end
         
-        appData.fichiersValides = fichiersValides;
+        % Remplissage automatique des cases de l'interface
+        numMinE.Value = round(globalMinE, 1);
+        numMaxE.Value = round(globalMaxE, 1);
+        numMinH.Value = round(globalMinH, 1);
+        numMaxH.Value = round(globalMaxH, 1);
         
-        dropChamp.Items = unique(champs);
-        dropFreq.Items = unique(freqs);
-        dropH.Items = unique(hauteurs);
-        
-        btnTracer.Enable = 'on';
-        btnExportSeul.Enable = 'on'; % Activation du nouveau bouton
-        btnExport.Enable = 'on';
-        lblStatus.Text = sprintf('Statut : %d cartes détectées', length(fichiersValides));
-        title(ax, 'Fichiers chargés avec succès. Prêt à l''affichage.', 'Color', couleurGris);
+        lblStatus.Text = 'Statut : Bornes globales appliquées !';
     end
 
-    % Action : Clic sur Afficher la cartographie
     function btnTracerCallback(~, ~)
-        champSel = dropChamp.Value;
-        freqSel = dropFreq.Value;
-        hSel = dropH.Value;
-        
-        nomFichierCible = sprintf('%s_%s_%s.csv', champSel, freqSel, hSel);
+        nomFichierCible = sprintf('%s_%s_%s.csv', dropChamp.Value, dropFreq.Value, dropH.Value);
         cheminComplet = fullfile(appData.dossierSource, nomFichierCible);
-        
-        if ~exist(cheminComplet, 'file')
-            uialert(fig, 'Cette combinaison spécifique n''existe pas dans le dossier.', 'Fichier introuvable');
-            return;
-        end
-        
-        lblStatus.Text = 'Statut : Tracé en cours...';
-        drawnow;
-        
-        opts = detectImportOptions(cheminComplet);
-        opts.VariableNamingRule = 'preserve';
+        opts = detectImportOptions(cheminComplet); opts.VariableNamingRule = 'preserve';
         data = readtable(cheminComplet, opts);
-        
         U = data{:, 1}; V = data{:, 2}; Z = data{:, 3};
         u_u = unique(U); v_u = unique(V);
-        Nu = length(u_u); Nv = length(v_u);
+        U_grid = reshape(U, length(v_u), length(u_u)); V_grid = reshape(V, length(v_u), length(u_u)); Z_grid = reshape(Z, length(v_u), length(u_u));
         
-        U_grid = reshape(U, Nv, Nu);
-        V_grid = reshape(V, Nv, Nu);
-        Z_grid = reshape(Z, Nv, Nu);
+        cla(ax); contourf(ax, U_grid, V_grid, Z_grid, 255, 'LineColor', 'none');
+        colormap(ax, 'jet'); grid(ax, 'on');
         
-        cla(ax);
-        contourf(ax, U_grid, V_grid, Z_grid, 255, 'LineColor', 'none');
-        colormap(ax, 'jet');
-        grid(ax, 'on');
-        
-        if contains(nomFichierCible, 'NearE')
-            clim(ax, [-60 75]);
+        % Applique l'échelle dynamique séparée E/H
+        if contains(dropChamp.Value, 'NearE')
+            clim(ax, [numMinE.Value numMaxE.Value]);
         else
-            clim(ax, [-112 28]);
+            clim(ax, [numMinH.Value numMaxH.Value]);
         end
         
-        title(ax, sprintf('Composante %s | Fréquence : %s | Altitude : %s', champSel, freqSel, hSel));
-        xlabel(ax, 'Axe local U (mm)', 'FontWeight', 'bold');
-        ylabel(ax, 'Axe local V (mm)', 'FontWeight', 'bold');
-        
+        xlabel(ax, 'Axe local U (mm)', 'FontWeight', 'bold'); ylabel(ax, 'Axe local V (mm)', 'FontWeight', 'bold');
+        title(ax, sprintf('%s | %s | %s', dropChamp.Value, dropFreq.Value, dropH.Value));
         lblStatus.Text = 'Statut : Affichage mis à jour';
     end
 
-    % Action : Clic sur Exporter uniquement la carte active
     function btnExportSeulCallback(~, ~)
-        champSel = dropChamp.Value;
-        freqSel = dropFreq.Value;
-        hSel = dropH.Value;
-        
-        nomFichierCible = sprintf('%s_%s_%s.csv', champSel, freqSel, hSel);
+        nomFichierCible = sprintf('%s_%s_%s.csv', dropChamp.Value, dropFreq.Value, dropH.Value);
         cheminComplet = fullfile(appData.dossierSource, nomFichierCible);
+        [fichierOut, dossierOut] = uiputfile('*.png', 'Enregistrer sous...', fullfile(appData.dossierSource, strrep(nomFichierCible, '.csv', '_MATLAB.png')));
+        if fichierOut == 0, return; end
         
-        if ~exist(cheminComplet, 'file')
-            uialert(fig, 'Veuillez d''abord charger un dossier de données valide.', 'Erreur d''exportation');
-            return;
-        end
-        
-        % Ouverture d'un sélecteur de fichier de sauvegarde système
-        nomDefaut = strrep(nomFichierCible, '.csv', '_MATLAB.png');
-        [fichierOut, dossierOut] = uiputfile('*.png', 'Enregistrer la cartographie active sous...', fullfile(appData.dossierSource, nomDefaut));
-        
-        if fichierOut == 0, return; end % Annulation utilisateur
-        
-        lblStatus.Text = 'Statut : Génération du PNG...';
-        drawnow;
-        
-        % Extraction et reconstruction de la matrice pour impression propre
-        opts = detectImportOptions(cheminComplet);
-        opts.VariableNamingRule = 'preserve';
+        opts = detectImportOptions(cheminComplet); opts.VariableNamingRule = 'preserve';
         data = readtable(cheminComplet, opts);
+        U = data{:, 1}; V = data{:, 2}; Z = data{:, 3}; u_u = unique(U); v_u = unique(V);
+        U_grid = reshape(U, length(v_u), length(u_u)); V_grid = reshape(V, length(v_u), length(u_u)); Z_grid = reshape(Z, length(v_u), length(u_u));
         
-        U = data{:, 1}; V = data{:, 2}; Z = data{:, 3};
-        u_u = unique(U); v_u = unique(V);
-        U_grid = reshape(U, length(v_u), length(u_u));
-        V_grid = reshape(V, length(v_u), length(u_u));
-        Z_grid = reshape(Z, length(v_u), length(u_u));
-        
-        % Rendu HD dans une figure invisible (pour garder la colorbar avec la légende complète)
-        figTmp = figure('Visible', 'off');
-        contourf(U_grid, V_grid, Z_grid, 255, 'LineColor', 'none');
+        figTmp = figure('Visible', 'off'); contourf(U_grid, V_grid, Z_grid, 255, 'LineColor', 'none');
         colormap('jet'); colorbar; shading interp; grid on;
         
-        if contains(nomFichierCible, 'NearE')
-            clim([-60 75]); ylabel(colorbar, 'Champ électrique (dB V/m)');
+        if contains(dropChamp.Value, 'NearE')
+            clim([numMinE.Value numMaxE.Value]); ylabel(colorbar, 'Champ électrique (dB V/m)');
         else
-            clim([-112 28]); ylabel(colorbar, 'Champ Magnétique (dB A/m)');
+            clim([numMinH.Value numMaxH.Value]); ylabel(colorbar, 'Champ Magnétique (dB A/m)');
         end
         
         xlabel('Axe local U (mm)'); ylabel('Axe local V (mm)');
-        title(sprintf('Champ Proche : %s | %s | %s', champSel, freqSel, hSel));
-        
-        % Sauvegarde physique de l'image
-        saveas(figTmp, fullfile(dossierOut, fichierOut));
-        close(figTmp);
-        
-        lblStatus.Text = 'Statut : Image exportée avec succès !';
+        title(sprintf('%s | %s | %s', dropChamp.Value, dropFreq.Value, dropH.Value));
+        saveas(figTmp, fullfile(dossierOut, fichierOut)); close(figTmp);
     end
 
-    % Action : Clic sur Tout exporter en PNG
     function btnExportCallback(~, ~)
-        dossierOut = uigetdir(appData.dossierSource, 'Où sauvegarder les 90 fichiers PNG ?');
-        if dossierOut == 0, return; end
-        
+        dossierOut = uigetdir(appData.dossierSource, 'Où sauvegarder les PNG ?'); if dossierOut == 0, return; end
         total = length(appData.fichiersValides);
-        lblStatus.Text = 'Statut : Export global...';
-        drawnow;
-        
         for idx = 1:total
             f = appData.fichiersValides(idx);
-            lblStatus.Text = sprintf('Export : %d/%d', idx, total);
-            drawnow;
+            opts = detectImportOptions(fullfile(appData.dossierSource, f.name)); opts.VariableNamingRule = 'preserve';
+            data = readtable(fullfile(appData.dossierSource, f.name), opts);
+            U = data{:, 1}; V = data{:, 2}; Z = data{:, 3}; u_u = unique(U); v_u = unique(V);
+            U_grid = reshape(U, length(v_u), length(u_u)); V_grid = reshape(V, length(v_u), length(u_u)); Z_grid = reshape(Z, length(v_u), length(u_u));
             
-            cheminIn = fullfile(appData.dossierSource, f.name);
-            opts = detectImportOptions(cheminIn);
-            opts.VariableNamingRule = 'preserve';
-            data = readtable(cheminIn, opts);
-            
-            U = data{:, 1}; V = data{:, 2}; Z = data{:, 3};
-            u_u = unique(U); v_u = unique(V);
-            U_grid = reshape(U, length(v_u), length(u_u));
-            V_grid = reshape(V, length(v_u), length(u_u));
-            Z_grid = reshape(Z, length(v_u), length(u_u));
-            
-            figTmp = figure('Visible', 'off');
-            contourf(U_grid, V_grid, Z_grid, 255, 'LineColor', 'none');
+            figTmp = figure('Visible', 'off'); contourf(U_grid, V_grid, Z_grid, 255, 'LineColor', 'none');
             colormap('jet'); colorbar; shading interp; grid on;
             
             if contains(f.name, 'NearE')
-                clim([-60 75]); ylabel(colorbar, 'Champ électrique (dB V/m)');
+                clim([numMinE.Value numMaxE.Value]); ylabel(colorbar, 'Champ électrique (dB V/m)');
             else
-                clim([-112 28]); ylabel(colorbar, 'Champ Magnétique (dB A/m)');
+                clim([numMinH.Value numMaxH.Value]); ylabel(colorbar, 'Champ Magnétique (dB A/m)');
             end
             
             xlabel('Axe local U (mm)'); ylabel('Axe local V (mm)');
             title(sprintf('%s | %s | %s', f.champ, f.freq, f.hauteur));
-            
-            nomPng = fullfile(dossierOut, strrep(f.name, '.csv', '_MATLAB.png'));
-            saveas(figTmp, nomPng);
-            close(figTmp);
+            saveas(figTmp, fullfile(dossierOut, strrep(f.name, '.csv', '_MATLAB.png'))); close(figTmp);
         end
+        uiconfirm(fig, 'Exportation de masse terminée.', 'Succès', 'Icon', 'success');
+    end
+
+    % =====================================================================
+    % 5. SOUS-FENÊTRE : GENERATEUR DE SCRIPT D'EXPORT HFSS
+    % =====================================================================
+    function ouvrirGenerateurScript()
+        genFig = uifigure('Name', 'Générateur de Script d''Export Python HFSS', ...
+                           'Position', [150, 150, 550, 580], 'Color', [0.94, 0.94, 0.96]);
+                       
+        % --- Champs de saisie généraux ---
+        uilabel(genFig, 'Text', 'Nom du Setup HFSS :', 'Position', [20, 530, 150, 20], 'FontWeight', 'bold');
+        editSetup = uieditfield(genFig, 'text', 'Position', [180, 530, 340, 24], 'Value', 'Setup1 : LastAdaptive');
         
-        uiconfirm(fig, 'L''intégralité des cartographies a été exportée en haute définition.', ...
-                      'Export terminé', 'Options', {'Parfait'}, 'Icon', 'success');
-        lblStatus.Text = 'Statut : Prêt';
+        uilabel(genFig, 'Text', 'Nom du Plan de Mesure :', 'Position', [20, 495, 150, 20], 'FontWeight', 'bold');
+        editSurface = uieditfield(genFig, 'text', 'Position', [180, 495, 340, 24], 'Value', 'Mesures');
+        
+        uilabel(genFig, 'Text', 'Variable de Hauteur ($) :', 'Position', [20, 460, 150, 20], 'FontWeight', 'bold');
+        editHeightVar = uieditfield(genFig, 'text', 'Position', [180, 460, 340, 24], 'Value', '$H_mesure');
+        
+        uilabel(genFig, 'Text', 'Liste des hauteurs :', 'Position', [20, 415, 150, 20], 'FontWeight', 'bold');
+        editHeights = uieditfield(genFig, 'text', 'Position', [180, 415, 340, 24], 'Value', '1mm, 3mm, 5mm');
+        uilabel(genFig, 'Text', '(Séparées par des virgules)', 'Position', [180, 395, 200, 15], 'FontSize', 9, 'FontAngle', 'italic');
+        
+        uilabel(genFig, 'Text', 'Liste des fréquences :', 'Position', [20, 355, 150, 20], 'FontWeight', 'bold');
+        editFreqs = uieditfield(genFig, 'text', 'Position', [180, 355, 340, 24], 'Value', '0.1GHz, 0.2GHz, 0.5GHz, 0.8GHz, 1GHz, 2.42GHz');
+        uilabel(genFig, 'Text', '(Séparées par des virgules)', 'Position', [180, 335, 200, 15], 'FontSize', 9, 'FontAngle', 'italic');
+
+        % --- Cases à cocher pour les composantes de champs ---
+        uilabel(genFig, 'Text', 'Composantes à exporter :', 'Position', [20, 300, 180, 20], 'FontWeight', 'bold');
+        chkEx = uicheckbox(genFig, 'Text', 'NearEX', 'Position', [30, 275, 70, 20], 'Value', true);
+        chkEy = uicheckbox(genFig, 'Text', 'NearEY', 'Position', [110, 275, 70, 20], 'Value', true);
+        chkEz = uicheckbox(genFig, 'Text', 'NearEZ', 'Position', [190, 275, 70, 20], 'Value', true);
+        chkHx = uicheckbox(genFig, 'Text', 'NearHX', 'Position', [270, 275, 70, 20], 'Value', true);
+        chkHy = uicheckbox(genFig, 'Text', 'NearHY', 'Position', [350, 275, 70, 20], 'Value', true);
+        chkHz = uicheckbox(genFig, 'Text', 'NearHZ', 'Position', [430, 275, 70, 20], 'Value', true);
+
+        % --- Notice explicative intégrée ---
+        pnlInfo = uipanel(genFig, 'Title', ' ⚠️ NOTE D''UTILISATION CAO HFSS', 'Position', [20, 100, 500, 140], ...
+                                 'BackgroundColor', [254, 249, 231] / 255, 'FontWeight', 'bold', 'ForegroundColor', [110, 80, 20]/255);
+        
+        uilabel(pnlInfo, 'Text', { ...
+            'Pour éviter tout conflit géométrique ou erreur d''échelle, le script généré se concentre'; ...
+            'uniquement sur le balayage et l''extraction de données. Avant de le lancer :'; ...
+            ''; ...
+            '1. Créez votre repère relatif (Relative CS) lié à la variable globale de hauteur.'; ...
+            '2. Créez votre plan de mesure rectangulaire rattaché à ce repère local.'; ...
+            '3. Configurez impérativement un Setup de simulation en mode "Multi-Frequencies".'; ...
+            '4. Assurez-vous que les noms du Setup et du Plan correspondent exactement à ceux saisis.'}, ...
+                         'Position', [10, 5, 480, 110], 'WordWrap', 'on', 'FontSize', 10);
+
+        % --- Bouton de génération ---
+        uibutton(genFig, 'Text', '💾 Générer le fichier de script (.py)', ...
+                         'Position', [140, 35, 270, 40], ...
+                         'BackgroundColor', [41, 128, 185] / 255, 'FontColor', 'w', 'FontWeight', 'bold', 'FontSize', 12, ...
+                         'ButtonPushedFcn', @(~,~) executerGenerationScript());
+
+        function executerGenerationScript()
+            [fichierOut, dossierOut] = uiputfile('*.py', 'Enregistrer le script d''automatisation HFSS', 'export_hfss_automation.py');
+            if fichierOut == 0, return; end
+            
+            selFields = {};
+            if chkEx.Value, selFields{end+1} = 'NearEX'; end
+            if chkEy.Value, selFields{end+1} = 'NearEY'; end
+            if chkEz.Value, selFields{end+1} = 'NearEZ'; end
+            if chkHx.Value, selFields{end+1} = 'NearHX'; end
+            if chkHy.Value, selFields{end+1} = 'NearHY'; end
+            if chkHz.Value, selFields{end+1} = 'NearHZ'; end
+            pyFields = ['[', strjoin(cellfun(@(x) ['"', x, '"'], selFields, 'UniformOutput', false), ', '), ']'];
+            
+            hItems = cellfun(@strtrim, split(editHeights.Value, ','), 'UniformOutput', false);
+            pyHeights = ['[', strjoin(cellfun(@(x) ['"', x, '"'], hItems, 'UniformOutput', false), ', '), ']'];
+            
+            fItems = cellfun(@strtrim, split(editFreqs.Value, ','), 'UniformOutput', false);
+            pyFreqs = ['[', strjoin(cellfun(@(x) ['"', x, '"'], fItems, 'UniformOutput', false), ', '), ']'];
+
+            % Correction critique : ajout de l'argument 'n' (native format)
+            fid = fopen(fullfile(dossierOut, fichierOut), 'w', 'n', 'UTF-8');
+            lines = { ...
+                'import os' ; ...
+                'import csv' ; ...
+                '' ; ...
+                '# INITIALISATION DES OBJETS DE DESKTOP HFSS' ; ...
+                'oDesktop.RestoreWindow()' ; ...
+                'oProject = oDesktop.GetActiveProject()' ; ...
+                'oDesign = oProject.GetActiveDesign()' ; ...
+                'oModule = oDesign.GetModule("ReportSetup")' ; ...
+                '' ; ...
+                ['setup_name = "', editSetup.Value, '"'] ; ...
+                ['radiation_surface = "', editSurface.Value, '"'] ; ...
+                ['frequencies_hfss = ', pyFreqs] ; ...
+                ['heights = ', pyHeights] ; ...
+                ['fields = ', pyFields] ; ...
+                ['height_var = "', editHeightVar.Value, '"'] ; ...
+                '' ; ...
+                '# PARSING ET GENERATION DYNAMIQUE DE LA CORRESPONDANCE FREQUENCE/NOM' ; ...
+                'freq_to_mhz = {}' ; ...
+                'for f in frequencies_hfss:' ; ...
+                '    if "GHz" in f:' ; ...
+                '        freq_to_mhz[f] = str(int(float(f.upper().replace("GHZ","")) * 1000))' ; ...
+                '    elif "MHz" in f:' ; ...
+                '        freq_to_mhz[f] = str(int(float(f.upper().replace("MHZ",""))))' ; ...
+                '    else:' ; ...
+                '        freq_to_mhz[f] = f' ; ...
+                '' ; ...
+                'project_path = oProject.GetPath()' ; ...
+                'export_dir = os.path.join(project_path, "Export_CSV")' ; ...
+                'if not os.path.exists(export_dir):' ; ...
+                '    os.makedirs(export_dir)' ; ...
+                '' ; ...
+                'excel_file_path = os.path.join(export_dir, "Resultats_MinMax.csv")' ; ...
+                'total_iterations = len(frequencies_hfss) * len(heights) * len(fields)' ; ...
+                'current_count = 0' ; ...
+                '' ; ...
+                '# CREATION DE LA FENETRE TEMPORAIRE DE RAPPORT POUR LE FLUX D''EXPORTATION' ; ...
+                'report_name = "Visualisation_Dynamique"' ; ...
+                'current_trace = "dB(" + fields[0] + ")"' ; ...
+                '' ; ...
+                'oModule.CreateReport(report_name, "Near Fields", "Rectangular Contour Plot", setup_name, ' ; ...
+                '    ["Context:=", radiation_surface], ' ; ...
+                '    ["_v:=", ["All"], "_u:=", ["All"], "Freq:=", [frequencies_hfss[0]], height_var + ":=", [heights[0]]], ' ; ...
+                '    ["X Component:=", "_v", "Y Component:=", "_u", "Z Component:=", [current_trace]])' ; ...
+                '' ; ...
+                'with open(excel_file_path, mode=''w'') as csv_file:' ; ...
+                '    writer = csv.writer(csv_file, delimiter='';'', lineterminator=''\n'')' ; ...
+                '    writer.writerow(["Frequence (MHz)", "Hauteur (mm)", "Champ", "Minimum dB", "Maximum dB"])' ; ...
+                '' ; ...
+                '    for freq in frequencies_hfss:' ; ...
+                '        for h in heights:' ; ...
+                '            for field in fields:' ; ...
+                '                current_count += 1' ; ...
+                '                f_mhz_print = freq_to_mhz.get(freq, freq)' ; ...
+                '                ' ; ...
+                '                console_msg = "Extraction CSV : " + field + " a " + f_mhz_print + "MHz (H: " + h + ") | Progression : " + str(current_count) + "/" + str(total_iterations)' ; ...
+                '                oDesktop.AddMessage(oProject.GetName(), oDesign.GetName(), 0, console_msg)' ; ...
+                '                ' ; ...
+                '                new_trace = "dB({})".format(field)' ; ...
+                '                file_output_name = "{}_{}_{}".format(field, f_mhz_print + "MHz", h)' ; ...
+                '' ; ...
+                '                try:' ; ...
+                '                    oModule.UpdateTraces(report_name, [current_trace], setup_name, ' ; ...
+                '                        ["Context:=", radiation_surface], ' ; ...
+                '                        ["_v:=", ["All"], "_u:=", ["All"], "Freq:=", [freq], height_var + ":=", [h]], ' ; ...
+                '                        ["X Component:=", "_v", "Y Component:=", "_u", "Z Component:=", [new_trace]])' ; ...
+                '                    current_trace = new_trace' ; ...
+                '                except:' ; ...
+                '                    pass' ; ...
+                '                ' ; ...
+                '                csv_global_path = os.path.join(export_dir, file_output_name + ".csv")' ; ...
+                '                oModule.ExportToFile(report_name, csv_global_path, False)' ; ...
+                '                ' ; ...
+                '                min_val = float(''inf'')' ; ...
+                '                max_val = float(''-inf'')' ; ...
+                '                ' ; ...
+                '                if os.path.exists(csv_global_path):' ; ...
+                '                    with open(csv_global_path, ''r'') as data_file:' ; ...
+                '                        lines_data = data_file.readlines()' ; ...
+                '                        for line in lines_data[1:]:' ; ...
+                '                            cols = line.split('','')' ; ...
+                '                            if len(cols) >= 3:' ; ...
+                '                                try:' ; ...
+                '                                    val = float(cols[2].strip())' ; ...
+                '                                    if val < min_val: min_val = val' ; ...
+                '                                    if val > max_val: max_val = val' ; ...
+                '                                except:' ; ...
+                '                                    pass' ; ...
+                '                ' ; ...
+                '                if min_val == float(''inf''):' ; ...
+                '                    min_val = "N/A"' ; ...
+                '                    max_val = "N/A"' ; ...
+                '' ; ...
+                '                h_mm = h.replace("mm", "")' ; ...
+                '                writer.writerow([f_mhz_print, h_mm, field, min_val, max_val])' ; ...
+                '' ; ...
+                'oModule.DeleteReports([report_name])' ; ...
+                'oDesktop.AddMessage(oProject.GetName(), oDesign.GetName(), 0, "Script d''exportation termine avec succes !")' ...
+            };
+            
+            for lineIdx = 1:length(lines)
+                 % Sécurité : conversion forcée en texte brut
+                  chaine = strjoin(string(lines{lineIdx}), '');
+                 fprintf(fid, '%s\n', char(chaine));
+            end
+                fclose(fid);
+        end
     end
 end
